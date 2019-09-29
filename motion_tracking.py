@@ -6,19 +6,22 @@ import time
 import cv2
 import numpy as np
 
-
+print("starting...")
 room_status = []
+diff_placeholder_frame = []
+i = 0
 entrance_count = 0
 ap = argparse.ArgumentParser()
-#ap.add_argument("", "--video", help="path to the video file")
-ap.add_argument("-a", "--min-area", type=int, default=1000, help="minimum area size")
+# ap.add_argument("", "--video", help="path to the video file")
+ap.add_argument("-a", "--min-area", type=int,
+                default=700, help="minimum area size")
 args = vars(ap.parse_args())
 
 if args.get("video", None) is None:
 	vs = VideoStream(src=0).start()
 	time.sleep(3.0)
 
-firstFrame = None #contains original image to compare too
+firstFrame = None  # contains original image to compare too
 
 
 while True:
@@ -30,21 +33,24 @@ while True:
     if frame is None:
 	       break
 
-    frame = imutils.resize(frame, width=500) #resize frame
+    frame = imutils.resize(frame, width=500)  # resize frame
     cframe = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    cframe = cv2.GaussianBlur(cframe, (21, 21), 0) #cframe is now the frame to be compared
+    # cframe is now the frame to be compared
+    cframe = cv2.GaussianBlur(cframe, (21, 21), 0)
 
-#initialise comparison parameters
+# initialise comparison parameters
     if firstFrame is None:
         firstFrame = cframe
-        mean_compare = cv2.mean(cframe)[0]
+
         continue
 
-    diff_im = cv2.absdiff(cframe,firstFrame)
-    binary_image = cv2.threshold(diff_im, 50, 255, cv2.THRESH_BINARY)[1] #thresholding operation
+    diff_im = cv2.absdiff(cframe, firstFrame)
+    binary_image = cv2.threshold(diff_im, 25, 255, cv2.THRESH_BINARY)[
+                                 1]  # thresholding operation
 
-    thresh = cv2.dilate(binary_image, None, iterations=2) #fill holes
-    cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+    thresh = cv2.dilate(binary_image, None, iterations=2)  # fill holes
+    cnts = cv2.findContours(
+        thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     cnts = imutils.grab_contours(cnts)
 
     for c in cnts:
@@ -54,12 +60,22 @@ while True:
 
 		# compute the bounding box for the contour, draw it on the frame,
 		# and update the text
-        (x, y, w, h) = cv2.boundingRect(c) #(x,y) are the top left corner and (w,h) are the width and height
+        # (x,y) are the top left corner and (w,h) are the width and height
+        (x, y, w, h) = cv2.boundingRect(c)
         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
         status = "occupied"
+    if i == 0:
+        placeholder_frame = cframe
+        i = i + 1
+    elif len(room_status) > 1 and room_status[-1] == "occupied":
+        diff_placeholder_frame = cv2.absdiff(cframe, placeholder_frame)
+        i = i + 1
+    if i > 1000:
+        i = 0
 
-
-
+    if np.mean(diff_placeholder_frame) < 3:
+        #diff_im = diff_placeholder_frame
+        firstFrame = None;
 
     cv2.putText(frame,"Entrances: {}".format(entrance_count),(350,20),cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
     cv2.putText(frame, "Room Status: {}".format(status), (10, 20),
@@ -74,4 +90,5 @@ while True:
     if len(room_status) > 1:
         if room_status[-1] == "occupied" and room_status[-2] == "Unoccupied":
             entrance_count = entrance_count + 1
-        print(room_status[-1],entrance_count)
+        print(room_status[-1],entrance_count,i)
+        #print(np.mean(diff_placeholder_frame))
