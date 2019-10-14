@@ -77,6 +77,12 @@ while True:
         #diff_im = diff_placeholder_frame
         firstFrame = None;
 
+    if status == "occupied":
+        print("recording video")
+        cv2.imwrite('C:/Users/murth/OneDrive/Documents/Python Scripts/Visual_tripwire/frame.jpg',frame)
+
+
+
     cv2.putText(frame,"Entrances: {}".format(entrance_count),(350,20),cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
     cv2.putText(frame, "Room Status: {}".format(status), (10, 20),
 		cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
