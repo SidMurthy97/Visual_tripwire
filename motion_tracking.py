@@ -23,6 +23,8 @@ if args.get("video", None) is None:
 
 firstFrame = None  # contains original image to compare too
 
+buffer = 0
+pic_number = 0
 
 while True:
 
@@ -77,9 +79,7 @@ while True:
         #diff_im = diff_placeholder_frame
         firstFrame = None;
 
-    if status == "occupied":
-        print("recording video")
-        cv2.imwrite('C:/Users/murth/OneDrive/Documents/Python Scripts/Visual_tripwire/frame.jpg',frame)
+
 
 
 
@@ -91,10 +91,22 @@ while True:
     key = cv2.waitKey(1) & 0xFF
 
 
+
+    if status == "occupied" and buffer > 150:
+        buffer = 0
+
+        print("recording video")
+
+        pic_name = "C:/Users/murth/OneDrive/Documents/Python Scripts/Visual_tripwire/tracked_images/frame" + str(pic_number) + ".jpg"
+        cv2.imwrite(pic_name,frame)
+
+        pic_number = pic_number + 1
+
+    buffer = buffer + 1
     room_status.append(status)
 
-    if len(room_status) > 1:
-        if room_status[-1] == "occupied" and room_status[-2] == "Unoccupied":
-            entrance_count = entrance_count + 1
-        print(room_status[-1],entrance_count,i)
-        #print(np.mean(diff_placeholder_frame))
+    # if len(room_status) > 1:
+    #     if room_status[-1] == "occupied" and room_status[-2] == "Unoccupied":
+    #         entrance_count = entrance_count + 1
+    #     print(room_status[-1],entrance_count,i)
+    #     #print(np.mean(diff_placeholder_frame))
